@@ -1,11 +1,149 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NODEMAILER</title>
+    <title>Formulário de Contato</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px #ddd;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 25px;
+        }
+
+        label {
+            display: block;
+            margin: 14px 0 6px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 18px;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            background: #087bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005dcc;
+        }
+
+        .erro {
+            color: #c62828;
+            font-size: 14px;
+        }
+
+        .sucesso {
+            color: #16803c;
+            text-align: center;
+        }
+    </style>
 </head>
+
 <body>
-    
+    <div class="container">
+        <h1>Contato</h1>
+
+        <% if (sucesso) { %>
+            <p class="sucesso"><%= sucesso %></p>
+        <% } %>
+
+        <% if (erros.length > 0) { %>
+            <div class="erro">
+                <% erros.forEach(function(erro) { %>
+                    <p><%= erro.msg %></p>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <form action="/enviar" method="POST">
+            <label for="nome">Nome</label>
+            <input
+                type="text"
+                id="nome"
+                name="nome"
+                placeholder="Seu nome"
+                value="<%= dados.nome || '' %>"
+                required
+            >
+
+            <label for="email">E-mail</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="seu@email.com"
+                value="<%= dados.email || '' %>"
+                required
+            >
+
+            <label for="telefone">Telefone</label>
+            <input
+                type="tel"
+                id="telefone"
+                name="telefone"
+                placeholder="(00) 00000-0000"
+                value="<%= dados.telefone || '' %>"
+                required
+            >
+
+            <label for="assunto">Assunto</label>
+            <input
+                type="text"
+                id="assunto"
+                name="assunto"
+                placeholder="Assunto da mensagem"
+                value="<%= dados.assunto || '' %>"
+                required
+            >
+
+            <label for="mensagem">Mensagem</label>
+            <textarea
+                id="mensagem"
+                name="mensagem"
+                rows="5"
+                placeholder="Escreva sua mensagem..."
+                required
+            ><%= dados.mensagem || '' %></textarea>
+
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
 </body>
 </html>

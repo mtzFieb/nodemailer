@@ -1,71 +1,98 @@
-const dotenv = require("dotenv").config();
-const express = require("express");
-const router = express.Router();
-const { body, validationResult } = require("express-validator");
-const nodemailer = require("nodemailer");
 
-// 1. Rota para exibir o formulário de contato
-router.get("/", (req, res) => {
-    res.render("pages/index", { errors: [], valores: {} });
+const express = require('express');
+const router = express.Router();
+const { body, validationResult } = require('express-validator');
+const nodemailer = require('nodemailer');
+
+
+router.get('/', (req, res) => {
+    res.render('pages/index', {
+        erros: [],
+        dados: {},
+        sucesso: ''
+    });
 });
 
-// 2. Rota POST para receber os dados e enviar o e-mail
-router.post("/enviar", 
+router.post(
+    '/enviar',
     [
-        // Validações exigidas pelo express-validator
-        body("nome").notEmpty().withMessage("O nome é obrigatório"),
-        body("email").isEmail().withMessage("Insira um e-mail válido"),
-        body("telefone").notEmpty().withMessage("O telefone é obrigatório"),
-        body("assunto").notEmpty().withMessage("O assunto é obrigatório"),
-        body("mensagem").isLength({ min: 10 }).withMessage("A mensagem deve ter pelo menos 10 caracteres")
-    ], 
+        body('nome')
+            .trim()
+            .notEmpty().withMessage('Informe seu nome.'),
+
+        body('email')
+            .trim()
+            .isEmail().withMessage('Informe um e-mail válido.'),
+
+        body('telefone')
+            .trim()
+            .notEmpty().withMessage('Informe seu telefone.'),
+
+        body('assunto')
+            .trim()
+            .notEmpty().withMessage('Informe o assunto.'),
+
+        body('mensagem')
+            .trim()
+            .notEmpty().withMessage('Digite sua mensagem.')
+    ],
     async (req, res) => {
-        const errors = validationResult(req);
-        
-        // Se houver erros de validação, recarrega a página mostrando os erros
-        if (!errors.isEmpty()) {
-            return res.render("pages/index", { 
-                errors: errors.array(), 
-                valores: req.body 
+        const erros = validationResult(req);
+
+        if (!erros.isEmpty()) {
+            return res.status(400).render('pages/index', {
+                erros: erros.array(),
+                dados: req.body,
+                sucesso: ''
             });
         }
 
-        // Recupera os dados enviados pelo formulário HTML
         const { nome, email, telefone, assunto, mensagem } = req.body;
 
-        // Configuração do Nodemailer utilizando variáveis do .env (requisito do exercício)
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
-
         try {
-            // Envia o e-mail para você mesmo com as informações recebidas
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
             await transporter.sendMail({
-                from: `"${nome}" <${email}>`, // Quem enviou no formulário
-                to: process.env.EMAIL_USER,    // Para você mesmo (seu e-mail de teste)
-                subject: `Contato Form: ${assunto}`,
-                html: `
-                    <h2>Nova mensagem de contato</h2>
-                    <p><strong>Nome:</strong> ${nome}</p>
-                    <p><strong>E-mail:</strong> ${email}</p>
-                    <p><strong>Telefone:</strong> ${telefone}</p>
-                    <p><strong>Assunto:</strong> ${assunto}</p>
-                    <p><strong>Mensagem:</strong><br>${mensagem}</p>
+                from: `"Formulário de contato" <${process.env.EMAIL_USER}>`,
+                to: process.env.EMAIL_USER,
+                replyTo: email,
+                subject: `Contato: ${assunto}`,
+                text: `
+Nome: ${nome}
+E-mail: ${email}
+Telefone: ${telefone}
+Assunto: ${assunto}
+
+Mensagem:
+${mensagem}
                 `
             });
 
-            // Redireciona ou envia uma mensagem de sucesso
-            res.send("E-mail enviado com sucesso utilizando o Nodemailer!");
+            return res.status(200).render('pages/index', {
+                erros: [],
+                dados: {},
+                sucesso: 'Mensagem enviada com sucesso!'
+            });
+            
+       
+} catch (erro) {
+    console.error('Erro ao enviar e-mail:', erro);
 
-        } catch (error) {
-            console.error(error);
-            res.status(500).send("Erro ao tentar enviar o e-mail.");
-        }
+    return res.status(500).render('pages/index', {
+        erros: [{
+            msg: 'Falha ao enviar e-mail. Confira o terminal do VS Code.'
+        }],
+        dados: req.body,
+        sucesso: ''
+    });
+}
+
     }
 );
 
